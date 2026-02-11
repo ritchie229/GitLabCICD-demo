@@ -42,7 +42,7 @@ deploy_dev:
     - dev
 
 deploy_prod:
-  stage: deploy-prod
+  stage: deploy_prod
   needs: [build_test_push]
   image: alpine
   before_script:
