@@ -1,6 +1,7 @@
 stages:
   - build_test_push
-  - deploy
+  - deploy_dev
+  - deploy_prod
 
 variables:
   IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
@@ -24,11 +25,24 @@ build_test_push:
     - docker build -t $IMAGE .
     - docker run --rm $IMAGE pytest
     - docker push $IMAGE
-  only:
-    - master
+#  only:
+#    - master
 
-deploy:
-  stage: deploy
+deploy_dev:
+  stage: deploy_dev
+  needs: [build_test_push]
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://$CI_REGISTRY
+  script:
+    - docker stop demo_ci_cd || true
+    - docker rm demo_ci_cd || true 
+    - docker pull $IMAGE 
+    - docker run -d --name demo_ci_cd -p 5000:5000 $IMAGE 
+  only:
+    - dev
+
+deploy_prod:
+  stage: deploy-prod
   needs: [build_test_push]
   image: alpine
   before_script:
